@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Velkommen</title>
+<title>Velkommen til Bilfinger Rjukan</title>
 <style>
   :root{
     --ink:#1c1f22;
@@ -111,16 +111,20 @@
   <div class="card">
 
     <div id="form-wrap" class="form-wrap">
-      <div class="eyebrow">Velkommen til Resepsjonen hos Bilfinger Rjukan</div>
+      <div class="eyebrow">Resepsjon</div>
       <h1>Meld din ankomst</h1>
 
       <label for="name">Navn</label>
       <input type="text" id="name" placeholder="Fornavn Etternavn" autocomplete="off">
 
+      <label for="company">Firma</label>
+      <input type="text" id="company" placeholder="Firmanavn" autocomplete="off">
+
       <label for="host">Hvem skal du treffe?</label>
       <select id="host">
         <option value="">Velg Enhet</option>
-        <option>Elektro & Automasjon</option>
+        <!-- Bytt ut med dine ansatte -->
+        <option>Elektro & automasjon</option>
         <option>Bygg & Anlegg</option>
         <option>Mekanisk</option>
         <option>Andre henvendelser</option>
@@ -131,7 +135,7 @@
 
     <div id="status" class="status">
       <div class="big" id="statusBig">Takk!</div>
-      <div class="small" id="statusSmall">Beskjeden er sendt.</div>
+      <div class="small" id="statusSmall">Beskjeden er sendt. Noen vil snart komme for å møte deg</div>
     </div>
 
   </div>
@@ -148,6 +152,7 @@
 
   const submitBtn = document.getElementById('submitBtn');
   const nameInput = document.getElementById('name');
+  const companyInput = document.getElementById('company');
   const hostSelect = document.getElementById('host');
   const formWrap = document.getElementById('form-wrap');
   const status = document.getElementById('status');
@@ -158,6 +163,7 @@
   function resetAfter(ms){
     setTimeout(() => {
       nameInput.value = "";
+      companyInput.value = "";
       hostSelect.value = "";
       status.classList.remove('show');
       formWrap.classList.remove('hide');
@@ -167,10 +173,15 @@
 
   submitBtn.addEventListener('click', () => {
     const name = nameInput.value.trim();
+    const company = companyInput.value.trim();
     const host = hostSelect.value;
 
     if(!name){
       nameInput.focus();
+      return;
+    }
+    if(!company){
+      companyInput.focus();
       return;
     }
     if(!host){
@@ -183,6 +194,7 @@
     // Bygg URL med query-parametre og send via skjult form + iframe
     const url = SCRIPT_URL
       + "?navn=" + encodeURIComponent(name)
+      + "&firma=" + encodeURIComponent(company)
       + "&hvem=" + encodeURIComponent(host)
       + "&tid=" + encodeURIComponent(new Date().toISOString());
 
@@ -200,8 +212,11 @@
     }, 900);
   });
 
-  // Enter-tast i navnefeltet hopper til nedtrekksmeny
+  // Enter-tast hopper videre til neste felt
   nameInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ companyInput.focus(); }
+  });
+  companyInput.addEventListener('keydown', (e) => {
     if(e.key === 'Enter'){ hostSelect.focus(); }
   });
 </script>
