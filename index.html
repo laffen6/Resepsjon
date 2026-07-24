@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Velkommen</title>
+<style>
+  :root{
+    --ink:#1c1f22;
+    --paper:#f6f4ef;
+    --line:#d8d3c8;
+    --accent:#2f6f5e;
+    --accent-dark:#234f42;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    height:100%;
+    margin:0;
+    font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-tap-highlight-color:transparent;
+  }
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .card{
+    width:100%;
+    max-width:640px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:40px 36px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.06);
+  }
+  .eyebrow{
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    font-size:13px;
+    color:var(--accent);
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  h1{
+    font-size:32px;
+    margin:0 0 28px 0;
+    font-weight:700;
+    line-height:1.15;
+  }
+  label{
+    display:block;
+    font-size:15px;
+    font-weight:600;
+    margin:20px 0 8px 0;
+  }
+  input[type="text"], select{
+    width:100%;
+    font-size:20px;
+    padding:16px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink);
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  input[type="text"]:focus, select:focus{
+    outline:3px solid var(--accent);
+    outline-offset:1px;
+    background:#fff;
+  }
+  button{
+    width:100%;
+    margin-top:32px;
+    padding:20px;
+    font-size:20px;
+    font-weight:700;
+    border:none;
+    border-radius:10px;
+    background:var(--accent);
+    color:#fff;
+    cursor:pointer;
+  }
+  button:active{ background:var(--accent-dark); }
+  button:disabled{ opacity:0.6; }
+
+  .status{
+    display:none;
+    text-align:center;
+    padding:40px 10px;
+  }
+  .status.show{ display:block; }
+  .status .big{
+    font-size:26px;
+    font-weight:700;
+    margin-bottom:8px;
+    color:var(--accent-dark);
+  }
+  .status .small{
+    color:#555;
+    font-size:16px;
+  }
+  .form-wrap.hide{ display:none; }
+</style>
+</head>
+<body>
+
+  <div class="card">
+
+    <div id="form-wrap" class="form-wrap">
+      <div class="eyebrow">Resepsjon</div>
+      <h1>Meld din ankomst</h1>
+
+      <label for="name">Navn</label>
+      <input type="text" id="name" placeholder="Fornavn Etternavn" autocomplete="off">
+
+      <label for="host">Hvem skal du treffe?</label>
+      <select id="host">
+        <option value="">Velg Enhet â¦</option>
+        <option>Elektro & Automasjon</option>
+        <option>Bygg & Anlegg</option>
+        <option>Mekanisk</option>
+        <option>Andre henvendelser</option>
+      </select>
+
+      <button id="submitBtn">Meld ankomst</button>
+    </div>
+
+    <div id="status" class="status">
+      <div class="big" id="statusBig">Takk!</div>
+      <div class="small" id="statusSmall">Beskjeden er sendt.</div>
+    </div>
+
+  </div>
+
+  <!-- Skjult iframe: mottar svaret fra Apps Script uten at siden navigerer bort -->
+  <iframe name="hidden_target" style="display:none;"></iframe>
+
+  <!-- Selve skjemaet som posted til Apps Script. GET via query-string i action -->
+  <form id="theForm" method="GET" target="hidden_target" style="display:none;"></form>
+
+<script>
+  // *** BYTT UT MED DIN EGEN APPS SCRIPT WEB APP-URL ***
+  const SCRIPT_URL = "https://script.google.com/macros/s/DIN_SCRIPT_ID/exec";
+
+  const submitBtn = document.getElementById('submitBtn');
+  const nameInput = document.getElementById('name');
+  const hostSelect = document.getElementById('host');
+  const formWrap = document.getElementById('form-wrap');
+  const status = document.getElementById('status');
+  const statusBig = document.getElementById('statusBig');
+  const statusSmall = document.getElementById('statusSmall');
+  const theForm = document.getElementById('theForm');
+
+  function resetAfter(ms){
+    setTimeout(() => {
+      nameInput.value = "";
+      hostSelect.value = "";
+      status.classList.remove('show');
+      formWrap.classList.remove('hide');
+      submitBtn.disabled = false;
+    }, ms);
+  }
+
+  submitBtn.addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    const host = hostSelect.value;
+
+    if(!name){
+      nameInput.focus();
+      return;
+    }
+    if(!host){
+      hostSelect.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+
+    // Bygg URL med query-parametre og send via skjult form + iframe
+    const url = SCRIPT_URL
+      + "?navn=" + encodeURIComponent(name)
+      + "&hvem=" + encodeURIComponent(host)
+      + "&tid=" + encodeURIComponent(new Date().toISOString());
+
+    theForm.action = url;
+    theForm.submit();
+
+    // Vi kan ikke lese svaret fra iframen (annen origin), sÃ¥ vi antar suksess
+    // og viser kvitteringsskjerm etter en kort ventetid.
+    setTimeout(() => {
+      formWrap.classList.add('hide');
+      statusBig.textContent = "Takk, " + name.split(' ')[0] + "!";
+      statusSmall.textContent = host + " fÃ¥r nÃ¥ beskjed om at du har kommet.";
+      status.classList.add('show');
+      resetAfter(6000);
+    }, 900);
+  });
+
+  // Enter-tast i navnefeltet hopper til nedtrekksmeny
+  nameInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ hostSelect.focus(); }
+  });
+</script>
+
+</body>
+</html>
